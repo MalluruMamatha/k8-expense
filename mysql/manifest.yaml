@@ -36,9 +36,9 @@ metadata:
 spec:
   selector:
     component: mysql
-      project: expense
-      tier: db
-      environment: dev
+    project: expense
+    tier: db
+    environment: dev
   ports:
   - protocol: TCP
     port: 3306 #service-port
