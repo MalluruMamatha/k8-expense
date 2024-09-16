@@ -28,6 +28,8 @@ data:
       large_client_header_buffers 6 32k;
       client_max_body_size 100m;
 
+      # server_names_hash_bucket_size 64;
+      # server_name_in_redirect off;
       include /etc/nginx/mime.types;
       default_type application/octet-stream;
 
@@ -56,6 +58,11 @@ data:
 
         proxy_http_version 1.1;
 
+        #charset koi8-r;
+        #access_log  /var/log/nginx/host.access.log  main;
+        #error_log /dev/stdout debug;
+        #rewrite_log on;
+
         location / {
             root   /usr/share/nginx/html;
             index  index.html index.htm;
@@ -68,6 +75,10 @@ data:
             try_files $uri /images/placeholder.png;
         }
 
+        #error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
         error_page   500 502 503 504  /50x.html;
         location = /50x.html {
             root   /usr/share/nginx/html;
@@ -76,7 +87,9 @@ data:
         location /api/ { 
             proxy_pass http://backend:8080/;
         }
-      }
+
+        }
+
     }
 ---
 kind: Deployment
@@ -84,33 +97,44 @@ apiVersion: apps/v1
 metadata:
   name: frontend
   namespace: expense
+  # these labels are deployment related labels
   labels:
     component: frontend
     project: expense
-    tier: frontend
+    tier: web
 spec:
   replicas: 2
   selector:
     matchLabels:
       component: frontend
       project: expense
-      tier: frontend
+      tier: web
+  # pod definition
   template:
     metadata:
       labels:
         component: frontend
         project: expense
-        tier: frontend
-        environment: dev
+        tier: web
     spec:
       containers:
       - name: frontend
         image: mallurumamatha/frontend:v1.0
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "150m"
+            memory: "256Mi"
         volumeMounts:
         - name: nginx-conf
           mountPath: /etc/nginx/nginx.conf
           subPath: nginx.conf
           readOnly: true
+        # envFrom:
+        # - configMapRef:
+        #     name: frontend
       volumes:
       - name: nginx-conf
         configMap:
@@ -118,6 +142,7 @@ spec:
           items:
           - key: nginx.conf
             path: nginx.conf
+
 ---
 apiVersion: v1
 kind: Service
@@ -129,9 +154,8 @@ spec:
   selector:
     component: frontend
     project: expense
-    tier: frontend
-    environment: dev
+    tier: web
   ports:
   - protocol: TCP
-    port: 8080
-    targetPort: 8080
+    port: 80 #service-port
+    targetPort: 8080 #target-port
