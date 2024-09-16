@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Debug
+metadata:
+  name: debug
+  namespace: expense
+spec:
+  containers:
+    name: debug
+    image: malluruonline/debug:v1.0
