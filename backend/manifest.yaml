@@ -46,7 +46,6 @@ metadata:
   name: backend
   namespace: expense
 spec:
-type: 
   selector:
     component: backend
     project: expense
